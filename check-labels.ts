@@ -1,15 +1,12 @@
-const { Octokit } = require('@octokit/core');
-
-function getOctoClient() {
-    return new Octokit({ auth: process.env.ghToken });
-}
+import {getPRLabels, getPRID, getRepository, calculateRequiredLabels} from "./api/utils";
 
 async function run() {
-    // Get the PR ID.
 
-    // Get the PR lable.
+    // Get the PR ID.
+    const labels = await getPRLabels(getRepository(), getPRID());
 
     // Check which labels we need to add based on path of the changed files.
+    const requiredLabels = await calculateRequiredLabels(getRepository(), getPRID());
 
     // Add/Remove clickim based on the path.
 
