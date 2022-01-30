@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/core";
-import { LabelFromServer } from "./interfaces";
+import {PullRequestFiles} from "./interfaces";
 
 export function getOctokitClient(): Octokit {
     return new Octokit({ auth: process.env.ghToken });
@@ -10,21 +10,37 @@ export function getPRID(): number {
     return parseInt(PRIDFromEnv);
 }
 
-export function getRepository(): string {
-    return "RoySegall/testim-gh-labels-handler";
+export function getRepository(): string[] {
+    return ['RoySegall', 'testim-gh-labels-handler'];
 }
 
-export async function getPRLabels(repo: string, PR_ID: number) {
-    const response = await getOctokitClient().request(`GET /repos/${repo}/issues/${PR_ID}/labels`);
-
-    return response.data.map((labelFromServer: LabelFromServer) => {
-        return labelFromServer.name
+export async function calculateRequiredLabels(owner: string, repo: string, issue_number: number): Promise<string[]> {
+    const response = await getOctokitClient().request(`GET /repos/{owner}/{repo}/pulls/{issue_number}/files`, {
+        owner, repo, issue_number
     });
+
+    let labelsToAdd: string[] = [];
+
+    response.data.forEach(({filename}: PullRequestFiles) => {
+        // Marking the which labels we need to add.
+        if (filename.includes('apps/services')) {
+            labelsToAdd.push('Services');
+        }
+
+        if (filename.includes('apps/clickim')) {
+            labelsToAdd.push('Clickim');
+        }
+    });
+
+    return labelsToAdd;
 }
 
-export async function calculateRequiredLabels(repo: string, PR_ID: number): Promise<string[]> {
-    const response = await getOctokitClient().request(`GET /repos/${repo}/pulls/${PR_ID}/files`);
 
-    console.log(response);
-    return ['a', 'b']
+export async function setPRLabels(owner: string, repo: string, issue_number: number, labels: string[]) {
+    const response = await getOctokitClient().request(`PUT /repos/{owner}/{repo}/issues/{issue_number}/labels`, {
+        repo,
+        owner,
+        issue_number,
+        labels
+    });
 }
