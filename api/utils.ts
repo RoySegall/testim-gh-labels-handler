@@ -1,4 +1,4 @@
-import { Octokit } from "@octokit/core";
+import {Octokit} from "@octokit/core";
 import {PullRequestFiles} from "./interfaces";
 
 export function getOctokitClient(): Octokit {
@@ -10,8 +10,8 @@ export function getPRID(): number {
     return parseInt(PRIDFromEnv);
 }
 
-export function getRepository(): string[] {
-    return ['RoySegall', 'testim-gh-labels-handler'];
+export function getRepository(): {owner: string, repo: string} {
+    return {owner: 'RoySegall', repo: 'testim-gh-labels-handler'};
 }
 
 export async function calculateRequiredLabels(owner: string, repo: string, issue_number: number): Promise<string[]> {

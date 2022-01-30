@@ -3,16 +3,12 @@ import {getPRID, getRepository, calculateRequiredLabels, setPRLabels} from "./ap
 async function run() {
 
     // Check which labels we need to add based on path of the changed files.
-    const [repo, owner] = getRepository();
+    const {repo, owner} = getRepository();
     const PRID = getPRID();
 
     const requiredLabels = await calculateRequiredLabels(repo, owner, PRID);
-
-    // Add/Remove clickim based on the path.
     await setPRLabels(repo, owner, PRID, requiredLabels);
 }
-
-
 
 (async () => {
     await run()
