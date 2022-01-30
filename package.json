@@ -1,0 +1,16 @@
+{
+  "name": "testim-gh-labels-handler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "check-labels": "node ./check-labels.js",
+    "dev": "nodemon ./check-labels.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@octokit/core": "^3.5.1",
+    "nodemon": "^2.0.15"
+  }
+}
