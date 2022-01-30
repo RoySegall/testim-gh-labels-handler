@@ -14,9 +14,9 @@ export function getRepository(): {owner: string, repo: string} {
     return {owner: 'RoySegall', repo: 'testim-gh-labels-handler'};
 }
 
-export async function calculateRequiredLabels(owner: string, repo: string, issue_number: number): Promise<string[]> {
-    const response = await getOctokitClient().request(`GET /repos/{owner}/{repo}/pulls/{issue_number}/files`, {
-        owner, repo, issue_number
+export async function calculateRequiredLabels(owner: string, repo: string, pull_number: number): Promise<string[]> {
+    const response: any = await getOctokitClient().request(`GET /repos/{owner}/{repo}/pulls/{pull_number}/files`, {
+        owner, repo, pull_number
     });
 
     let labelsToAdd: string[] = [];

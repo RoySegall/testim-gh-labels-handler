@@ -6,8 +6,8 @@ async function run() {
     const {repo, owner} = getRepository();
     const PRID = getPRID();
 
-    const requiredLabels = await calculateRequiredLabels(repo, owner, PRID);
-    await setPRLabels(repo, owner, PRID, requiredLabels);
+    const requiredLabels = await calculateRequiredLabels(owner, repo, PRID);
+    await setPRLabels(owner, repo, PRID, requiredLabels);
 }
 
 (async () => {
