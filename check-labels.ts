@@ -6,8 +6,15 @@ async function run() {
     const {repo, owner} = getRepository();
     const PRID = getPRID();
 
+    return;
+
+    console.log('Checking which labels we need to check');
     const requiredLabels = await calculateRequiredLabels(owner, repo, PRID);
+
+    console.log(`The labels are: ${requiredLabels.join(', ')}`);
     await setPRLabels(owner, repo, PRID, requiredLabels);
+
+    console.log('Added');
 }
 
 (async () => {

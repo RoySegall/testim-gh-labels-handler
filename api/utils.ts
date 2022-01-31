@@ -2,11 +2,14 @@ import {Octokit} from "@octokit/core";
 import {PullRequestFiles} from "./interfaces";
 
 export function getOctokitClient(): Octokit {
-    return new Octokit({ auth: process.env.ghToken });
+    return new Octokit({ auth: process.env.GH_TOKEN });
 }
 
 export function getPRID(): number {
+    console.log(process.env);
     let PRIDFromEnv: string = process.env.PR_ID || '';
+
+
     return parseInt(PRIDFromEnv);
 }
 
