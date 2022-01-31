@@ -6,7 +6,15 @@ on:
 jobs:
   label_issue:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 16.9.0 ]
     steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
       - env:
           GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
 #          PR_ID: ${{ github.event.issue.html_url }}
