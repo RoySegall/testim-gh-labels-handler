@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "check-labels": "tsc ./check-labels.ts",
+    "check-labels": "tsc ./check-labels.ts && node ./check-labels.js",
     "dev": "nodemon ./check-labels.ts"
   },
   "author": "",
