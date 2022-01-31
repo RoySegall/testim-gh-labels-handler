@@ -7,6 +7,9 @@ export function getOctokitClient(): Octokit {
 
 export function getPRID(): number {
     let PRIDFromEnv: string = process.env.PR_ID || '';
+
+    console.log(process.env.GITHUB_REF);
+
     return parseInt(PRIDFromEnv);
 }
 

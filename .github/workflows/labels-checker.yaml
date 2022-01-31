@@ -20,7 +20,5 @@ jobs:
 #          PR_ID: ${{ github.event.issue.html_url }}
           PR_ID: 3
         run: |
-          pwd
-          ls -al
           npm i
           npm run check-labels
