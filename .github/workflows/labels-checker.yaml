@@ -1,6 +1,9 @@
 on:
   pull_requests:
-    branches: *
+    types: [opened, reopened]
+  push:
+    branches:
+      - '**'
 
 jobs:
   label_issue:
