@@ -4,6 +4,8 @@ on:
       - '**'
 
 jobs:
+  permissions:
+    pull-requests: read
   label_issue:
     runs-on: ubuntu-latest
     strategy:
