@@ -19,7 +19,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
 #          PR_ID: ${{ github.event.issue.html_url }}
           PR_ID: 3
-          PR_NUMBER: ${{ github.event.pull_request }}
+          PR_NUMBER: ${{ github.event }}
         run: |
           npm i
           npm run check-labels
