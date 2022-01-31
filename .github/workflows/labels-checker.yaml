@@ -21,6 +21,6 @@ jobs:
           PR_ID: 3
           NUMBER: ${{ github.event.issue.number }}
         run: |
-          echo '${{ toJSON(github) }}'
-          npm i
-          npm run check-labels
+          echo '${{ toJSON(runner) }}'
+#          npm i
+#          npm run check-labels
