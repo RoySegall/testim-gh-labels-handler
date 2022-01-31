@@ -1,0 +1,15 @@
+on:
+  pull_requests:
+    branches: *
+
+jobs:
+  label_issue:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+#          PR_ID: ${{ github.event.issue.html_url }}
+          PR_ID: 3
+        run: |
+          npm i
+          npm run check-labels
