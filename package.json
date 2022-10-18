@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "check-labels": "node ./check-labels.js",
-    "dev": "nodemon ./check-labels.ts"
+    "dev": "nodemon ./PRProgressIndicator.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@octokit/core": "^3.5.1"
+    "@octokit/core": "^3.5.1",
+    "@types/lodash": "^4.14.186",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@types/node": "^17.0.13",
