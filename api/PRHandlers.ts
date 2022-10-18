@@ -41,6 +41,7 @@ async function PRStagingEnv(owner: string, repo: string, issue_number: number, o
         owner, repo, pull_number: issue_number,
     });
 
+    // todo: iterate over all pages and extract to a common place for other handlers.
     const shouldAddLinkToStaging = files.filter(file => file.filename.includes('apps/clickim/'))
 
     if (isEmpty(shouldAddLinkToStaging)) {
