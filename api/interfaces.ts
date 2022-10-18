@@ -60,14 +60,3 @@ export interface Comment {
     performed_via_github_app?: any;
 }
 
-
-export type IndicatorStatus = 'processing' | 'done';
-
-export interface Indicator {
-    title: string,
-    status: IndicatorStatus,
-    handler: {
-        processing: string,
-        finished: () => string,
-    }
-}

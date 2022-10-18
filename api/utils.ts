@@ -1,6 +1,6 @@
 import {Octokit} from "@octokit/core";
-import {Comment, IndicatorStatus, PullRequestFiles} from "./interfaces";
 import {isEmpty} from "lodash";
+import {PRHandlerResults, PRHandlers} from "./PRHandlers";
 
 const openingLine = 'Minor information regarding the PR';
 
@@ -17,37 +17,16 @@ export function getRepository(): {owner: string, repo: string} {
     return {owner: 'RoySegall', repo: 'testim-gh-labels-handler'};
 }
 
-function createProgressTable(status: IndicatorStatus): string {
-    return "<table>" +
-        "<thead>" +
-            "<tr>" +
-                "<td>task</td>" +
-                "<td>status</td>" +
-                "<td>results</td>" +
-            "</tr>" +
-        "</thead>" +
-        "<tbody>" +
-            "<tr>" +
-                "<td>PR title</td>" +
-                "<td>❌</td>" +
-                "<td>The title need to be in the format of <code>TES-[0-9*]: [a-zA-Z\d]</code>. Baed on your branch name it should be <code>TES-8893: Updating models to TS</code></td>" +
-            "</tr>" +
+async function createProgressTable(owner: string, repo: string, issue_number: number): Promise<string> {
+    const headers = ['Task', 'Status', 'Results'].map(header => `<td>${header}</td>`).join('\n');
+    const results = await Promise.all(PRHandlers.map(handler => handler(owner, repo, issue_number, getOctokitClient())));
 
-            "<tr>" +
-                "<td>PR labels</td>" +
-                "<td>❌</td>" +
-                "<td>You need to have at least on of the follwing labels: <code>Fix</code>, <code>Feature</code> or <code>Maintaince</code></td>" +
-            "</tr>" +
+    const tableRowResults = results.map(PrHandlers => {
+        return PrHandlers.map(PRHandler => `<tr><td>${PRHandler.title}</td><td>${PRHandler.status}</td><td>${PRHandler.message}</td></tr>`).join('\n')
+    }).join('\n');
 
-            "<tr>" +
-                "<td>Staging environment</td>" +
-                "<td>✅</td>" +
-                "<td>Go to <a href='https://staging.testim.io/TES-10341-modal-project-creation-tooltip' target='_blank'>Staging env</a></td>" +
-            "</tr>" +
-        "</tbody>" +
-    "</table>";
+    return `<table><thead><tr>${headers}</tr></thead><tbody>${tableRowResults}</tbody></table>`
 }
-
 
 async function getCommentIndicators(owner: string, repo: string, pull_number: number): Promise<number> {
     const {data: comments} = await getOctokitClient().request('GET /repos/{owner}/{repo}/issues/comments', {
@@ -83,7 +62,7 @@ async function getCommentIndicators(owner: string, repo: string, pull_number: nu
 }
 
 async function createCommentIndicator(owner: string, repo: string, issue_number: number): Promise<number> {
-    const table = createProgressTable('processing');
+    const table = await createProgressTable(owner, repo, issue_number);
     const response = await getOctokitClient().request('POST /repos/{owner}/{repo}/issues/{issue_number}/comments', {
         owner,
         repo,
@@ -93,14 +72,14 @@ async function createCommentIndicator(owner: string, repo: string, issue_number:
     return response.data.id;
 }
 
-async function runPRValidation(owner: string, repo: string, comment_id: number) {
-    const table = createProgressTable('done');
+async function runPRValidation(owner: string, repo: string, issue_number: number, comment_id: number) {
+    const table = await createProgressTable(owner, repo, issue_number);
 
     await getOctokitClient().request('PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}', {
         owner,
         repo,
         comment_id,
-        body: `${openingLine}: \n${table} \n\nUpdated at: ${new Date()}`
+        body: `${openingLine}: ${table} \n\nUpdated at: ${new Date()}`
     })
 }
 
@@ -114,5 +93,5 @@ export async function createOrUpdateProgressIndicators() {
         prCommentToUpdate = await createCommentIndicator(owner, repo, pull_number);
     }
 
-    await runPRValidation(owner, repo, prCommentToUpdate);
+    await runPRValidation(owner, repo, pull_number, prCommentToUpdate);
 }
