@@ -1,4 +1,5 @@
 import {Octokit} from "@octokit/core";
+import {isEmpty} from "lodash";
 
 enum ProcessStatus {
     PASSED = '✅',
@@ -12,6 +13,19 @@ export interface PRHandlerResults {
 }
 
 async function PRTileValidator(owner: string, repo: string, issue_number: number, octokit: Octokit): Promise<PRHandlerResults[]> {
+    const {data: PRInfo} = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+        owner, repo, pull_number: issue_number
+    });
+
+    const labelsArValid = !isEmpty(PRInfo.labels) && PRInfo.labels.every((label: any) => {
+        if (!['fix', 'maintaince', 'feature'].includes(label.name.toLowerCase())) {
+            return false;
+        }
+
+        // todo: check if contains only one of them.
+        return true
+    });
+
     return [
         {
             title: 'PR title',
@@ -20,8 +34,8 @@ async function PRTileValidator(owner: string, repo: string, issue_number: number
         },
         {
             title: 'PR labels',
-            status: ProcessStatus.PASSED,
-            message: 'You need to have at least one of the following labels: <code>Fix</code>, <code>Maintaince</code> or <code>Feature</code>',
+            status: labelsArValid ? ProcessStatus.PASSED : ProcessStatus.FAILED,
+            message: labelsArValid ? '🌮' : 'You need to have at least one of the following labels: <code>Fix</code>, <code>Maintaince</code> or <code>Feature</code>',
         }
     ];
 }
