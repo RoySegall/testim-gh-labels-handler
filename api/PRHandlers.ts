@@ -17,34 +17,44 @@ async function PRTileValidator(owner: string, repo: string, issue_number: number
         owner, repo, pull_number: issue_number
     });
 
-    const labelsArValid = !isEmpty(PRInfo.labels) && PRInfo.labels.every((label: any) => {
-        if (!['fix', 'maintaince', 'feature'].includes(label.name.toLowerCase())) {
-            return false;
-        }
+    const baseLabels = ['fix', 'maintaince', 'feature'];
+    const currentLabels = !isEmpty(PRInfo.labels) && PRInfo.labels.map(label => label.name) || [];
 
-        // todo: check if contains only one of them.
-        return true
-    });
+    let labelsAreValid = false;
+    if (!isEmpty(currentLabels)) {
+        let baseLabelsAmount = baseLabels.filter(baseLabel => currentLabels.includes(baseLabel));
+        labelsAreValid = baseLabelsAmount.length === 1;
+    }
 
+    // todo: add validation for the pr title.
     return [
         {
-            title: 'PR title',
-            status: ProcessStatus.FAILED,
-            message: 'The PR title is not valid',
-        },
-        {
             title: 'PR labels',
-            status: labelsArValid ? ProcessStatus.PASSED : ProcessStatus.FAILED,
-            message: labelsArValid ? '🌮' : 'You need to have at least one of the following labels: <code>Fix</code>, <code>Maintaince</code> or <code>Feature</code>',
+            status: labelsAreValid ? ProcessStatus.PASSED : ProcessStatus.FAILED,
+            message: labelsAreValid ? '🌮' : 'You need to have one of the following labels: <code>Fix</code>, <code>Maintaince</code> or <code>Feature</code>',
         }
     ];
 }
 
 async function PRStagingEnv(owner: string, repo: string, issue_number: number, octokit: Octokit): Promise<PRHandlerResults[]> {
+    const {data: files} = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
+        owner, repo, pull_number: issue_number,
+    });
+
+    const shouldAddLinkToStaging = files.filter(file => file.filename.includes('apps/clickim/'))
+
+    if (isEmpty(shouldAddLinkToStaging)) {
+        return [];
+    }
+
+    const {data: PRInfo} = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+        owner, repo, pull_number: issue_number
+    });
+
     return [{
         title: 'Staging env',
         status: ProcessStatus.PASSED,
-        message: '<a href=https://staging.testim.io/master>Go to staging env</a>',
+        message: `<a href=https://staging.testim.io/${PRInfo.head.ref}>Go to staging env</a>`,
     }];
 }
 
