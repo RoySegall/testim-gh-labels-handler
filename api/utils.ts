@@ -30,13 +30,13 @@ function createProgressTable(status: IndicatorStatus): string {
             "<tr>" +
                 "<td>PR title</td>" +
                 "<td>❌</td>" +
-                "<td>The title need to be in the format of <code>TES-[0-9*]: [a-zA-Z\d]</code></td>" +
+                "<td>The title need to be in the format of <code>TES-[0-9*]: [a-zA-Z\d]</code>. Baed on your branch name it should be <code>TES-8893: Updating models to TS</code></td>" +
             "</tr>" +
 
             "<tr>" +
                 "<td>PR labels</td>" +
                 "<td>❌</td>" +
-                "<td>You need to have at least on of the follwing labels: </td>" +
+                "<td>You need to have at least on of the follwing labels: <code>Fix</code>, <code>Feature</code> or <code>Maintaince</code></td>" +
             "</tr>" +
 
             "<tr>" +
@@ -83,18 +83,28 @@ async function getCommentIndicators(owner: string, repo: string, pull_number: nu
 }
 
 async function createCommentIndicator(owner: string, repo: string, issue_number: number): Promise<number> {
-
-    const table = createProgressTable('done');
-    await getOctokitClient().request('POST /repos/{owner}/{repo}/issues/{issue_number}/comments', {
+    const table = createProgressTable('processing');
+    const response = await getOctokitClient().request('POST /repos/{owner}/{repo}/issues/{issue_number}/comments', {
         owner,
         repo,
         issue_number,
-        body: `${openingLine}: \n${table}`
+        body: `${openingLine}: \n${table} \n\nCreated at: ${new Date()}`
     })
-    return 42;
+    return response.data.id;
 }
 
-export async function createOrUpdateProgressIndicators(): Promise<string> {
+async function runPRValidation(owner: string, repo: string, comment_id: number) {
+    const table = createProgressTable('done');
+
+    await getOctokitClient().request('PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}', {
+        owner,
+        repo,
+        comment_id,
+        body: `${openingLine}: \n${table} \n\nUpdated at: ${new Date()}`
+    })
+}
+
+export async function createOrUpdateProgressIndicators() {
     const [{owner, repo}, pull_number] = [getRepository(), getPRID()];
 
     let prCommentToUpdate = await getCommentIndicators(owner, repo, pull_number);
@@ -104,9 +114,5 @@ export async function createOrUpdateProgressIndicators(): Promise<string> {
         prCommentToUpdate = await createCommentIndicator(owner, repo, pull_number);
     }
 
-    const response: any = await getOctokitClient().request(`GET /repos/{owner}/{repo}/pulls/{pull_number}/files`, {
-        owner, repo, pull_number
-    });
-
-    return 'asdasd';
+    await runPRValidation(owner, repo, prCommentToUpdate);
 }
