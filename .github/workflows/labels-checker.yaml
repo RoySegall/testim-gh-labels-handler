@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  label_issue:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 16.9.0 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - env:
+          NUMBER: ${{ github.event.issue.number }}
+        run: |
+          echo $NUMBER
+          npm i
+          npm run dev
