@@ -2,6 +2,6 @@ import {createOrUpdateProgressIndicators} from "./api/utils";
 import * as github from '@actions/github';
 
 (async () => {
-    console.log(github.context.issue.number);
+    console.log(github.context.issue);
     await createOrUpdateProgressIndicators();
 })();
