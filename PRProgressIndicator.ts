@@ -99,7 +99,7 @@ import * as github from '@actions/github';
     })
 
     if (foo.data.pull_requests) {
-        console.log(foo.data.pull_requests[0]);
+        console.log(foo.data.pull_requests);
 
     }
     await createOrUpdateProgressIndicators();
