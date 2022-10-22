@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon ./PRProgressIndicator.ts"
+    "dev": "ts-node ./PRProgressIndicator.ts"
   },
   "author": "",
   "license": "ISC",
