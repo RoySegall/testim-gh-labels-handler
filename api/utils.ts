@@ -21,7 +21,7 @@ export async function getPRID(owner: string, repo: string): Promise<number> {
         return 0;
     }
 
-    return first(runInformation.data.pull_requests).number;
+    return runInformation.data.pull_requests[0].number;
 }
 
 export function getRepository(): {owner: string, repo: string} {
