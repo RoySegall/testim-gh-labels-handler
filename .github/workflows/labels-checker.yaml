@@ -18,6 +18,5 @@ jobs:
       - env:
           NUMBER: ${{ github.event.issue.number }}
         run: |
-          echo $NUMBER
           npm i
           npm run dev
