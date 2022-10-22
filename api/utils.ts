@@ -1,6 +1,7 @@
 import {Octokit} from "@octokit/core";
-import {isEmpty} from "lodash";
-import {PRHandlerResults, PRHandlers} from "./PRHandlers";
+import {isEmpty, first} from "lodash";
+import {PRHandlers} from "./PRHandlers";
+import * as github from '@actions/github';
 
 const openingLine = 'Minor information regarding the PR';
 
@@ -8,9 +9,19 @@ export function getOctokitClient(): Octokit {
     return new Octokit({ auth: process.env.ghToken });
 }
 
-export function getPRID(): number {
-    let PRIDFromEnv: string = process.env.PR_ID || '';
-    return parseInt(PRIDFromEnv);
+export async function getPRID(owner: string, repo: string): Promise<number> {
+    const runInformation = await getOctokitClient().request('GET /repos/{owner}/{repo}/actions/runs/{run_id}', {
+        owner,
+        repo,
+        run_id: github.context.runId
+    });
+
+
+    if (!runInformation.data.pull_requests) {
+        return 0;
+    }
+
+    return runInformation.data.pull_requests[0].number;
 }
 
 export function getRepository(): {owner: string, repo: string} {
@@ -84,7 +95,14 @@ async function runPRValidation(owner: string, repo: string, issue_number: number
 }
 
 export async function createOrUpdateProgressIndicators() {
-    const [{owner, repo}, pull_number] = [getRepository(), getPRID()];
+    const {owner, repo} = getRepository();
+    const pull_number = await getPRID(owner, repo);
+
+    if (!pull_number) {
+        throw new Error('The PR ID is missing');
+    }
+
+    console.log(`The PR ID id ${pull_number}`)
 
     let prCommentToUpdate = await getCommentIndicators(owner, repo, pull_number);
 
