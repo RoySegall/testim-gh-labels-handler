@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  label_issue:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 16.9.0 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: shrug
+        env: # Or as an environment variable
+          ghToken: ${{ secrets.GH_TOKEN }}
+        run: |
+          npm i
+          npm run dev
