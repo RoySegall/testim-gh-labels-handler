@@ -1,5 +1,5 @@
-import {getPRInfo, getReleases, PR_ID} from "./common";
-import {Label, Releases} from "./interfaces";
+import {createDraftedRelease, getPRInfo, getReleases, PR_ID} from "./common";
+import {Label, Release, Releases} from "./interfaces";
 
 type LocationInNotes = 'feature' | 'fix' | 'maintaince';
 type DraftState = {
@@ -35,8 +35,8 @@ function determinesDraftsByLabels(labels: Label[]) {
     return draftState;
 }
 
-async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Releases[]> {
-    const draftsToEdit: Releases[] = [];
+async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Releases> {
+    const draftsToEdit: Release[] = [];
 
     const releases = await getReleases();
     const draftsTitle = Object.fromEntries(releases
@@ -49,14 +49,15 @@ async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Release
             return;
         }
 
-        console.log(draftsTitle);
-
         if (Object.keys(draftsTitle).includes(draftState)) {
             console.log(`No need to create a release for ${draftState}. Skipping`);
-            const releaseToPush = draftsTitle[draftState] as unknown as Releases;
+            const releaseToPush = draftsTitle[draftState];
             draftsToEdit.push(releaseToPush)
             return;
         }
+
+        // this should be async.
+        createDraftedRelease(draftState).then(release => draftsToEdit.push(release));
 
         console.log(`Creating a draft release for ${draftState}`)
     });
@@ -65,8 +66,8 @@ async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Release
     return draftsToEdit;
 }
 
-function updateDraft(drafts: Releases[], title: string, locationInNotes: LocationInNotes) {
-    console.log(drafts[0])
+function updateDraft(drafts: Releases, title: string, locationInNotes: LocationInNotes) {
+    console.log(drafts.length);
 
     // Get the body of the draft.
     // Search for the proper category.

@@ -1,4 +1,4 @@
-import {PullRequestInfo, Releases} from "./interfaces";
+import {PullRequestInfo, Release, Releases} from "./interfaces";
 import {Octokit} from "@octokit/core";
 
 export const owner = 'roysegall';
@@ -18,5 +18,17 @@ export async function getReleases(): Promise<Releases> {
     const {data} = await octokitClient.request('GET /repos/{owner}/{repo}/releases', {
         repo, owner
     });
+    return data;
+}
+
+export async function createDraftedRelease(release: string): Promise<Release> {
+    const {data} = await octokitClient.request('POST /repos/{owner}/{repo}/releases', {
+        repo, owner,
+        draft: true,
+        tag_name: `${release}-draft`,
+        target_commitish: 'master',
+        name: `${release}-draft`,
+    });
+
     return data;
 }
