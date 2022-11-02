@@ -49,8 +49,12 @@ async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Release
             return;
         }
 
+        console.log(draftsTitle);
+
         if (Object.keys(draftsTitle).includes(draftState)) {
             console.log(`No need to create a release for ${draftState}. Skipping`);
+            const releaseToPush = draftsTitle[draftState] as unknown as Releases;
+            draftsToEdit.push(releaseToPush)
             return;
         }
 
@@ -61,7 +65,9 @@ async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Release
     return draftsToEdit;
 }
 
-function updateDraft(drafts: Releases[], title: string, user: string, locationInNotes: LocationInNotes) {
+function updateDraft(drafts: Releases[], title: string, locationInNotes: LocationInNotes) {
+    console.log(drafts[0])
+
     // Get the body of the draft.
     // Search for the proper category.
     // update the draft with the new text.
@@ -72,7 +78,9 @@ function updateDraft(drafts: Releases[], title: string, user: string, locationIn
 
     const draftState = determinesDraftsByLabels(labels);
     const releases = await createOrGetDraftForEdit(draftState);
-    updateDraft(releases, title, user?.name!, draftState.locationInNotes!);
+    const titleToNote = `${title} @${user?.name!} (#${PR_ID})`
+
+    updateDraft(releases, titleToNote, draftState.locationInNotes!);
 
     // The draft are the first ones. Check if we have ones by the items. todo: what about webdriver io draft?
 })();
