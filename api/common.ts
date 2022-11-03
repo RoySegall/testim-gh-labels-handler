@@ -32,3 +32,17 @@ export async function createDraftedRelease(release: string): Promise<Release> {
 
     return data;
 }
+
+export async function updateDraft(draft: Release) {
+    await octokitClient.request('PATCH /repos/{owner}/{repo}/releases/{release_id}', {
+        owner,
+        repo,
+        release_id: draft.id!,
+        tag_name: draft.tag_name!,
+        target_commitish: draft.target_commitish!,
+        name: draft.name!,
+        body: draft.body!,
+        draft: true,
+        prerelease: draft.prerelease!
+    })
+}
