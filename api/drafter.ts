@@ -128,16 +128,24 @@ function breakDraftBodyToSections(draftBody: string) {
 
 async function determineEditorOrClickim(issue_number: number) {
     const files = await getPRFiles(issue_number);
-
-
-    return files.some(({filename}) => {
-        return clickimPaths.some(path => filename.includes(path));
-    })
+    return files.some(({filename}) => clickimPaths.some(path => filename.includes(path)))
 }
 
 (async () => {
     const {title, user, labels, changed_files} = await getPRInfo(PR_ID);
     const isClickim = await determineEditorOrClickim(PR_ID);
+
+    /**
+     * check if there is a label clickim:
+     *  no: do nothing
+     *  yes:
+     *       check if we have a draft of editor/clickim
+     *          no: create a draft of editor/clickim accoridng to is clickim
+     *          yes:
+     *              - go over all PRs and check:
+     *                  if one of them is a clickim release change the title to clickim
+     *                  if none of them is a clickim set the release as an editor release.
+     */
 
     console.log(isClickim)
     return;
