@@ -1,4 +1,4 @@
-import {PullRequestInfo, Release, Releases} from "./interfaces";
+import {PullRequestFiles, PullRequestInfo, Release, Releases} from "./interfaces";
 import {Octokit} from "@octokit/core";
 
 export const owner = 'roysegall';
@@ -46,4 +46,12 @@ export async function updateDraft(draft: Release) {
         draft: true,
         prerelease: draft.prerelease!
     })
+}
+export async function getPRFiles(issue_number: number): Promise<PullRequestFiles> {
+    // todo: iterate over all pages.
+    const { data: files } = await octokitClient.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
+        owner, repo, pull_number: issue_number,
+    });
+
+    return files;
 }

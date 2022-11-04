@@ -1,4 +1,14 @@
-import {createDraftedRelease, getPRInfo, getReleases, octokitClient, PR_ID, owner, repo, updateDraft} from "./common";
+import {
+    createDraftedRelease,
+    getPRInfo,
+    getReleases,
+    octokitClient,
+    PR_ID,
+    owner,
+    repo,
+    updateDraft,
+    getPRFiles
+} from "./common";
 import {Label, Release, Releases} from "./interfaces";
 import {capitalize, isEmpty, update} from "lodash";
 
@@ -118,7 +128,15 @@ function breakDraftBodyToSections(draftBody: string) {
     return sections;
 }
 
+async function determineEditorOrClickim(issue_number: number) {
+    const data = await getPRFiles(issue_number);
+
+    console.log(data.length);
+}
+
 (async () => {
+    await determineEditorOrClickim(PR_ID)
+    return;
     const {title, user, labels} = await getPRInfo(PR_ID);
 
     const draftState = determinesDraftsByLabels(labels);
