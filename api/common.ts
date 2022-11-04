@@ -28,6 +28,7 @@ export async function createDraftedRelease(release: string): Promise<Release> {
         tag_name: `${release}-draft`,
         target_commitish: 'master',
         name: `${release}-draft`,
+
     });
 
     return data;
