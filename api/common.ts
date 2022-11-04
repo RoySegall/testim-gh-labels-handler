@@ -48,10 +48,15 @@ export async function updateDraft(draft: Release) {
     })
 }
 export async function getPRFiles(issue_number: number): Promise<PullRequestFiles> {
-    // todo: iterate over all pages.
-    const { data: files } = await octokitClient.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
-        owner, repo, pull_number: issue_number,
-    });
+    const {changed_files} = await getPRInfo(PR_ID);
+    const perPage = 100;
 
-    return files;
+    return (await Promise.all([...Array(Math.ceil(changed_files / perPage))].map(async (_, page) => {
+        const {data} = await octokitClient.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
+            owner, repo, pull_number: issue_number,
+            per_page: 100, page: page + 1
+        });
+
+        return data;
+    }))).flat();
 }

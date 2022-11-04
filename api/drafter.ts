@@ -2,15 +2,13 @@ import {
     createDraftedRelease,
     getPRInfo,
     getReleases,
-    octokitClient,
     PR_ID,
-    owner,
-    repo,
     updateDraft,
     getPRFiles
 } from "./common";
 import {Label, Release, Releases} from "./interfaces";
-import {capitalize, isEmpty, update} from "lodash";
+import {capitalize, isEmpty} from "lodash";
+const clickimPaths: string[] = ['apps/clickim/background', 'apps/clickim/common'];
 
 type LocationInNotes = 'features' | 'fixes' | 'maintenance';
 const emojis: {[key: string]: string} = {
@@ -129,15 +127,16 @@ function breakDraftBodyToSections(draftBody: string) {
 }
 
 async function determineEditorOrClickim(issue_number: number) {
-    const data = await getPRFiles(issue_number);
-
-    console.log(data.length);
+    const files = await getPRFiles(issue_number);
+    return files.some(({filename}) => clickimPaths.includes(filename))
 }
 
 (async () => {
-    await determineEditorOrClickim(PR_ID)
+    const {title, user, labels, changed_files} = await getPRInfo(PR_ID);
+    const isClickim = await determineEditorOrClickim(PR_ID);
+
+    console.log(isClickim)
     return;
-    const {title, user, labels} = await getPRInfo(PR_ID);
 
     const draftState = determinesDraftsByLabels(labels);
     const releases = await createOrGetDraftForEdit(draftState);
