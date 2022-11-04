@@ -128,7 +128,11 @@ function breakDraftBodyToSections(draftBody: string) {
 
 async function determineEditorOrClickim(issue_number: number) {
     const files = await getPRFiles(issue_number);
-    return files.some(({filename}) => clickimPaths.includes(filename))
+
+
+    return files.some(({filename}) => {
+        return clickimPaths.some(path => filename.includes(path));
+    })
 }
 
 (async () => {
