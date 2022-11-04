@@ -8,6 +8,7 @@ import {
 } from "./common";
 import {Label, Release, Releases} from "./interfaces";
 import {capitalize, isEmpty} from "lodash";
+
 const clickimPaths: string[] = ['apps/clickim/background', 'apps/clickim/common'];
 
 type LocationInNotes = 'features' | 'fixes' | 'maintenance';
@@ -38,7 +39,6 @@ function determinesDraftsByLabels(labels: Label[]) {
         maintaince: () => draftState.locationInNotes = 'maintenance',
     };
 
-    // We'll start by assuming the PR does not belong to any of our packages.
     labels.forEach(({name}) => {
         name = name.toLowerCase();
 
@@ -50,7 +50,7 @@ function determinesDraftsByLabels(labels: Label[]) {
     return draftState;
 }
 
-async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Releases> {
+async function createOrGetDraftForEdit(draftStates: DraftState, title: string, isClickim: boolean): Promise<Releases> {
     const draftsToEdit: Release[] = [];
 
     const releases = await getReleases();
@@ -64,44 +64,64 @@ async function createOrGetDraftForEdit(draftStates: DraftState): Promise<Release
             continue;
         }
 
-        if (Object.keys(draftsTitle).includes(draftState)) {
-            console.log(`No need to create a release for ${draftState}. Skipping`);
-            const releaseToPush = draftsTitle[draftState];
-            draftsToEdit.push(releaseToPush)
-            continue;
-        }
+        /**
+         * check if there is a label clickim:
+         *  no: do nothing
+         *  yes:
+         *       check if we have a draft of editor/clickim
+         *          no: create a draft of editor/clickim accoridng to is clickim
+         *          yes:
+         *              - go over all PRs and check:
+         *                  if one of them is a clickim release change the title to clickim
+         *                  if none of them is a clickim set the release as an editor release.
+         */
 
-        console.log(`Creating a draft release for ${draftState}`)
-        const createdDraft = await createDraftedRelease(draftState);
-        draftsToEdit.push(createdDraft);
+        if (['editor', 'clickim'].includes(draftState)) {
+            console.log('Handling a clickim/editor release.');
+        } else {
+            console.log('Handling drafts which are not clickim/editor');
+
+            let draft: Release;
+            if (Object.keys(draftsTitle).includes(draftState)) {
+                console.log(`No need to create a release for ${draftState}. Skipping`);
+                draft = draftsTitle[draftState];
+            } else {
+                console.log(`Creating a draft release for ${draftState}`)
+                draft = await createDraftedRelease(draftState);
+            }
+
+            await updateDraftReleaseNotes(draft, title, draftStates.locationInNotes!)
+        }
     }
 
     return draftsToEdit;
 }
 
-async function updateDraftReleaseNotes(drafts: Releases, title: string, locationInNotes: LocationInNotes) {
-    for await (const draft of drafts) {
-        console.log(`Updating ${draft.name}`);
+async function updateDraftReleaseNotes(draft: Release, title: string, locationInNotes: LocationInNotes) {
+    console.log(`Updating ${draft.name}`);
 
-        if (isEmpty(draft.body)) {
-            console.log(`The body of ${draft.name} is empty. Set it as it is`)
+    if (isEmpty(draft.body)) {
+        console.log(`The body of ${draft.name} is empty. Set it as it is`)
 
-            draft.body = `## ${emojis[locationInNotes]} ${capitalize(locationInNotes)}\n- ${title}`
-        } else {
-            const sections = breakDraftBodyToSections(draft.body!);
-            sections[capitalize(locationInNotes)].push(`- ${title}\r`);
-            sections[capitalize(locationInNotes)].sort()
+        draft.body = `## ${emojis[locationInNotes]} ${capitalize(locationInNotes)}\n- ${title}`
+    } else {
+        const sections = breakDraftBodyToSections(draft.body!);
+        sections[capitalize(locationInNotes)].push(`- ${title}\r`);
+        sections[capitalize(locationInNotes)].sort()
 
-            let newDraftBody = '';
-            Object.entries(sections).forEach(([title, entries]) => {
-                newDraftBody += `## ${emojis[title.toLowerCase()]} ${capitalize(title)}\n${entries.join('\n')}\n\n`
-            });
+        let newDraftBody = '';
+        Object.entries(sections).forEach(([title, entries]) => {
+            if (isEmpty(entries)) {
+                return;
+            }
 
-            draft.body = newDraftBody
-        }
+            newDraftBody += `## ${emojis[title.toLowerCase()]} ${capitalize(title)}\n${entries.join('\n')}\n\n`
+        });
 
-        await updateDraft(draft);
+        draft.body = newDraftBody
     }
+
+    await updateDraft(draft);
 }
 
 function breakDraftBodyToSections(draftBody: string) {
@@ -132,27 +152,10 @@ async function determineEditorOrClickim(issue_number: number) {
 }
 
 (async () => {
-    const {title, user, labels, changed_files} = await getPRInfo(PR_ID);
+    const {title, user, labels} = await getPRInfo(PR_ID);
     const isClickim = await determineEditorOrClickim(PR_ID);
 
-    /**
-     * check if there is a label clickim:
-     *  no: do nothing
-     *  yes:
-     *       check if we have a draft of editor/clickim
-     *          no: create a draft of editor/clickim accoridng to is clickim
-     *          yes:
-     *              - go over all PRs and check:
-     *                  if one of them is a clickim release change the title to clickim
-     *                  if none of them is a clickim set the release as an editor release.
-     */
-
-    console.log(isClickim)
-    return;
-
     const draftState = determinesDraftsByLabels(labels);
-    const releases = await createOrGetDraftForEdit(draftState);
     const titleToNote = `${title} @${user?.login} (#${PR_ID})`
-
-    await updateDraftReleaseNotes(releases, titleToNote, draftState.locationInNotes!);
+    await createOrGetDraftForEdit(draftState, titleToNote, isClickim);
 })();
