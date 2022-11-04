@@ -1,4 +1,4 @@
-import {createDraftedRelease, getPRInfo, getReleases, PR_ID, updateDraft} from "./common";
+import {createDraftedRelease, getPRInfo, getReleases, octokitClient, PR_ID, owner, repo, updateDraft} from "./common";
 import {Label, Release, Releases} from "./interfaces";
 import {capitalize, isEmpty, update} from "lodash";
 
@@ -80,8 +80,19 @@ async function updateDraftReleaseNotes(drafts: Releases, title: string, location
 
             draft.body = `## ${emojis[locationInNotes]} ${capitalize(locationInNotes)}\n- ${title}`
         } else {
-            // todo: break down to sections.
-            draft.body = `## ${emojis[locationInNotes]} ${capitalize(locationInNotes)}\n- ${title}`
+            const sections = breakDraftBodyToSections(draft.body!);
+            sections[capitalize(locationInNotes)].push(`- ${title}\r`);
+            sections[capitalize(locationInNotes)].sort()
+
+            let newDraftBody = '';
+            Object.entries(sections).forEach(([title, entries]) => {
+                newDraftBody += `## ${emojis[title.toLowerCase()]} ${capitalize(title)}\n`
+            });
+
+            console.log(newDraftBody);
+            // draft.body = `## ${emojis[locationInNotes]} ${capitalize(locationInNotes)}\n- ${title}`
+
+
         }
 
         await updateDraft(draft);
@@ -92,12 +103,41 @@ async function updateDraftReleaseNotes(drafts: Releases, title: string, location
     // update the draft with the new text.
 }
 
+function breakDraftBodyToSections(draftBody: string) {
+    const lines = draftBody.split('\n');
+    const sections: {[key: string]: string[]} = {
+        'Maintenance': [],
+        'Fixes': [],
+        'Features': [],
+    };
+
+    let currentSection: string;
+    lines.filter(line => line.trim()).forEach(line => {
+        if (line.startsWith('##')) {
+            // This is the beginning of a section.
+            currentSection = line.split(' ').at(-1)!.trim();
+            return;
+        }
+
+        sections[currentSection].push(line!)
+    });
+
+    return sections;
+}
+
 (async () => {
-    const {title, user, labels} = await getPRInfo(PR_ID);
+    const results = await octokitClient.request('GET /repos/{owner}/{repo}/releases/{id}', {
+        owner,
+        repo,
+        id: 81912272,
+    });
 
-    const draftState = determinesDraftsByLabels(labels);
-    const releases = await createOrGetDraftForEdit(draftState);
-    const titleToNote = `${title} @${user?.login} (#${PR_ID})`
+    const release = results.data as Release;
+    // const {title, user, labels} = await getPRInfo(PR_ID);
+    //
+    // const draftState = determinesDraftsByLabels(labels);
+    // const releases = await createOrGetDraftForEdit(draftState);
+    const titleToNote = `TES-0000: foo @RoySegall (#3)`
 
-    await updateDraftReleaseNotes(releases, titleToNote, draftState.locationInNotes!);
+    await updateDraftReleaseNotes([release], titleToNote, 'fixes');
 })();
