@@ -81,6 +81,7 @@ async function createOrGetDraftForEdit(draftStates: DraftState, title: string, i
                     draft.name = 'clickim-draft';
                 }
             } else {
+                // Get here the latest release number and push by 1.
                 console.log(`Creating a draft release for ${draftState}`)
                 draft = await createDraftedRelease(isClickim ? 'clickim' : 'editor');
             }
@@ -92,6 +93,7 @@ async function createOrGetDraftForEdit(draftStates: DraftState, title: string, i
                 draft = draftsTitle[draftState];
             } else {
                 console.log(`Creating a draft release for ${draftState}`)
+                // Get here the latest release number and push by 1.
                 draft = await createDraftedRelease(draftState);
             }
         }
