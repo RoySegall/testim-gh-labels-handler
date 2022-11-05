@@ -64,24 +64,29 @@ async function createOrGetDraftForEdit(draftStates: DraftState, title: string, i
             continue;
         }
 
-        /**
-         * check if there is a label clickim:
-         *  no: do nothing
-         *  yes:
-         *       check if we have a draft of editor/clickim
-         *          no: create a draft of editor/clickim accoridng to is clickim
-         *          yes:
-         *              - go over all PRs and check:
-         *                  if one of them is a clickim release change the title to clickim
-         *                  if none of them is a clickim set the release as an editor release.
-         */
+        let draft: Release;
 
         if (['editor', 'clickim'].includes(draftState)) {
             console.log('Handling a clickim/editor release.');
+            const editorOrClickimDraft = draftsTitle['clickim'] || draftsTitle['editor'];
+
+            if (editorOrClickimDraft) {
+                // Set the draft with the existing clickim/editor release.
+                draft = editorOrClickimDraft;
+
+                // This is a draft release of editor or clickim. In case the current PR is a clickim PR and the draft
+                // set to editor we need to change it to a clickim,
+                if (isClickim && draft.tag_name === 'editor-draft') {
+                    draft.tag_name = 'clickim-draft';
+                    draft.name = 'clickim-draft';
+                }
+            } else {
+                console.log(`Creating a draft release for ${draftState}`)
+                draft = await createDraftedRelease(isClickim ? 'clickim' : 'editor');
+            }
         } else {
             console.log('Handling drafts which are not clickim/editor');
 
-            let draft: Release;
             if (Object.keys(draftsTitle).includes(draftState)) {
                 console.log(`No need to create a release for ${draftState}. Skipping`);
                 draft = draftsTitle[draftState];
@@ -89,9 +94,8 @@ async function createOrGetDraftForEdit(draftStates: DraftState, title: string, i
                 console.log(`Creating a draft release for ${draftState}`)
                 draft = await createDraftedRelease(draftState);
             }
-
-            await updateDraftReleaseNotes(draft, title, draftStates.locationInNotes!)
         }
+        await updateDraftReleaseNotes(draft, title, draftStates.locationInNotes!)
     }
 
     return draftsToEdit;
