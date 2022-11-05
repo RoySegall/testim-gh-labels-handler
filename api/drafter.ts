@@ -66,21 +66,15 @@ async function createOrGetDraftForEdit(draftStates: DraftState, title: string, i
 
         let draft: Release;
 
-        const latestNumber = getLastRelease(draftState, releases);
-
         if (['editor', 'clickim'].includes(draftState)) {
-            draft = await handleClickimEditorRelease(draftsTitle, isClickim, draftState, latestNumber);
+            draft = await handleClickimEditorRelease(draftsTitle, isClickim, draftState);
         } else {
-            draft = await handleNonClickimRelease(draftsTitle, draftState, latestNumber);
+            draft = await handleNonClickimRelease(draftsTitle, draftState);
         }
         await updateDraftReleaseNotes(draft, title, draftStates.locationInNotes!)
     }
 
     return draftsToEdit;
-}
-
-function getLastRelease(releaseType: string, releases: Releases): number {
-    return 42;
 }
 
 async function handleClickimEditorRelease(drafts: ReleasesObject, isClickim: boolean, draftState: string, lastVersion?: number) {

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon ./api/drafter.ts"
+    "dev": "ts-node ./api/drafter.ts"
   },
   "author": "",
   "license": "ISC",
