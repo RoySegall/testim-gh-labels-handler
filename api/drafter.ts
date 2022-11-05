@@ -4,8 +4,10 @@ import {
     getReleases,
     PR_ID,
     updateDraft,
-    getPRFiles
+    getPRFiles, octokitClient,
+    repo, owner
 } from "./common";
+import * as github from '@actions/github';
 import {Label, Release, Releases} from "./interfaces";
 import {capitalize, isEmpty} from "lodash";
 
@@ -165,11 +167,32 @@ async function determineEditorOrClickim(issue_number: number) {
     return files.some(({filename}) => clickimPaths.some(path => filename.includes(path)))
 }
 
+async function getPRIDGitHubFromContext(context: 'pull-request' | 'closing-pr'): Promise<number> {
+    if (context === 'closing-pr') {
+        console.log(github.context);
+        return 0;
+    }
+
+    const runInformation = await octokitClient.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}', {
+        owner,
+        repo,
+        run_id: github.context.runId,
+    });
+
+
+    if (!runInformation.data.pull_requests) {
+        throw new Error('We could not determine the PR from the current workflow ');
+    }
+
+    return runInformation.data.pull_requests[0].number;
+}
+
 (async () => {
-    const {title, user, labels} = await getPRInfo(PR_ID);
-    const isClickim = await determineEditorOrClickim(PR_ID);
+    const prId = await getPRIDGitHubFromContext("closing-pr");
+    const {title, user, labels} = await getPRInfo(prId);
+    const isClickim = await determineEditorOrClickim(prId);
 
     const draftState = determinesDraftsByLabels(labels);
-    const titleToNote = `${title} @${user?.login} (#${PR_ID})`
+    const titleToNote = `${title} @${user?.login} (#${prId})`
     await createOrGetDraftForEdit(draftState, titleToNote, isClickim);
 })();
