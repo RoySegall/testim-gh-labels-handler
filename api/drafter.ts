@@ -10,7 +10,6 @@ import {Label, Release, Releases} from "./interfaces";
 import {capitalize, isEmpty} from "lodash";
 
 const clickimPaths: string[] = ['apps/clickim/background', 'apps/clickim/common'];
-
 type LocationInNotes = 'features' | 'fixes' | 'maintenance';
 const emojis: {[key: string]: string} = {
     'features': '🚀',
@@ -25,6 +24,7 @@ type DraftState = {
     webdriverio?: boolean,
     locationInNotes?: LocationInNotes;
 };
+type ReleasesObject = {[key: string]: Release}
 
 function determinesDraftsByLabels(labels: Label[]) {
     const draftState: DraftState = {};
@@ -54,7 +54,7 @@ async function createOrGetDraftForEdit(draftStates: DraftState, title: string, i
     const draftsToEdit: Release[] = [];
 
     const releases = await getReleases();
-    const draftsTitle = Object.fromEntries(releases
+    const draftsTitle: ReleasesObject = Object.fromEntries(releases
         .filter(release => release.draft)
         .map(release => [release.name!.replace('-draft', ''), release]));
 
@@ -66,41 +66,55 @@ async function createOrGetDraftForEdit(draftStates: DraftState, title: string, i
 
         let draft: Release;
 
+        const latestNumber = getLastRelease(draftState, releases);
+
         if (['editor', 'clickim'].includes(draftState)) {
-            console.log('Handling a clickim/editor release.');
-            const editorOrClickimDraft = draftsTitle['clickim'] || draftsTitle['editor'];
-
-            if (editorOrClickimDraft) {
-                // Set the draft with the existing clickim/editor release.
-                draft = editorOrClickimDraft;
-
-                // This is a draft release of editor or clickim. In case the current PR is a clickim PR and the draft
-                // set to editor we need to change it to a clickim,
-                if (isClickim && draft.tag_name === 'editor-draft') {
-                    draft.tag_name = 'clickim-draft';
-                    draft.name = 'clickim-draft';
-                }
-            } else {
-                // Get here the latest release number and push by 1.
-                console.log(`Creating a draft release for ${draftState}`)
-                draft = await createDraftedRelease(isClickim ? 'clickim' : 'editor');
-            }
+            draft = await handleClickimEditorRelease(draftsTitle, isClickim, draftState, latestNumber);
         } else {
-            console.log('Handling drafts which are not clickim/editor');
-
-            if (Object.keys(draftsTitle).includes(draftState)) {
-                console.log(`No need to create a release for ${draftState}. Skipping`);
-                draft = draftsTitle[draftState];
-            } else {
-                console.log(`Creating a draft release for ${draftState}`)
-                // Get here the latest release number and push by 1.
-                draft = await createDraftedRelease(draftState);
-            }
+            draft = await handleNonClickimRelease(draftsTitle, draftState, latestNumber);
         }
         await updateDraftReleaseNotes(draft, title, draftStates.locationInNotes!)
     }
 
     return draftsToEdit;
+}
+
+function getLastRelease(releaseType: string, releases: Releases): number {
+    return 42;
+}
+
+async function handleClickimEditorRelease(drafts: ReleasesObject, isClickim: boolean, draftState: string, lastVersion?: number) {
+    const editorOrClickimDraft = drafts['clickim'] || drafts['editor'];
+
+    if (editorOrClickimDraft) {
+        // Set the draft with the existing clickim/editor release.
+        const draft = editorOrClickimDraft;
+
+        // This is a draft release of editor or clickim. In case the current PR is a clickim PR and the draft
+        // set to editor we need to change it to a clickim,
+        if (isClickim && draft.tag_name === 'editor-draft') {
+            draft.tag_name = 'clickim-draft';
+            draft.name = 'clickim-draft';
+        }
+
+        return draft;
+    }
+
+    // Get here the latest release number and push by 1.
+    console.log(`Creating a draft release for ${draftState}`)
+    return await createDraftedRelease(isClickim ? 'clickim' : 'editor');
+}
+
+async function handleNonClickimRelease(draftsTitle: ReleasesObject, draftState: string, lastVersion?: number) {
+    console.log('Handling drafts which are not clickim/editor');
+
+    if (Object.keys(draftsTitle).includes(draftState)) {
+        console.log(`No need to create a release for ${draftState}. Skipping`);
+        return draftsTitle[draftState];
+    }
+    console.log(`Creating a draft release for ${draftState}`)
+    // Get here the latest release number and push by 1.
+    return createDraftedRelease(draftState);
 }
 
 async function updateDraftReleaseNotes(draft: Release, title: string, locationInNotes: LocationInNotes) {
