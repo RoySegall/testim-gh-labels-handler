@@ -48,7 +48,7 @@ export async function updateDraft(draft: Release) {
     })
 }
 export async function getPRFiles(issue_number: number): Promise<PullRequestFiles> {
-    const {changed_files} = await getPRInfo(PR_ID);
+    const {changed_files} = await getPRInfo(issue_number);
     const perPage = 100;
 
     return (await Promise.all([...Array(Math.ceil(changed_files / perPage))].map(async (_, page) => {
