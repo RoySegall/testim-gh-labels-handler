@@ -2,7 +2,6 @@ import {
     createDraftedRelease,
     getPRInfo,
     getReleases,
-    PR_ID,
     updateDraft,
     getPRFiles, octokitClient,
     repo, owner
@@ -166,6 +165,7 @@ async function determineEditorOrClickim(issue_number: number) {
     const files = await getPRFiles(issue_number);
     return files.some(({filename}) => clickimPaths.some(path => filename.includes(path)))
 }
+
 
 async function getPRIDGitHubFromContext(context: 'pull-request' | 'closing-pr'): Promise<number> {
     if (context === 'closing-pr') {
