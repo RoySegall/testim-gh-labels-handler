@@ -166,6 +166,7 @@ async function determineEditorOrClickim(issue_number: number) {
     return files.some(({filename}) => clickimPaths.some(path => filename.includes(path)))
 }
 
+
 async function getPRIDGitHubFromContext(context: 'pull-request' | 'closing-pr'): Promise<number> {
     if (context === 'closing-pr') {
         return parseInt(github.context.payload.number || 0);
