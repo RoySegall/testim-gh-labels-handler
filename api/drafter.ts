@@ -169,7 +169,7 @@ async function determineEditorOrClickim(issue_number: number) {
 
 async function getPRIDGitHubFromContext(context: 'pull-request' | 'closing-pr'): Promise<number> {
     if (context === 'closing-pr') {
-        return github.context.payload.pull_request.number!;
+        return github.context.payload.pull_request!.number || 0;
     }
 
     const runInformation = await octokitClient.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}', {
