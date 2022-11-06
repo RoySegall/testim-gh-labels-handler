@@ -169,6 +169,7 @@ async function determineEditorOrClickim(issue_number: number) {
 
 async function getPRIDGitHubFromContext(context: 'pull-request' | 'closing-pr'): Promise<number> {
     if (context === 'closing-pr') {
+        console.log(github.context);
         return github.context.payload.pull_request!.number || 0;
     }
 
