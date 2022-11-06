@@ -2,7 +2,6 @@ import {
     createDraftedRelease,
     getPRInfo,
     getReleases,
-    PR_ID,
     updateDraft,
     getPRFiles, octokitClient,
     repo, owner
